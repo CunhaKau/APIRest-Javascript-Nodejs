@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Usuários</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>Usuários</h1>
+  <a href="/add">Adicionar Novo Usuário</a>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>Idade</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.forEach(user => { %>
+        <tr>
+          <td><%= user.id %></td>
+          <td><%= user.name %></td>
+          <td><%= user.age %></td>
+          <td>
+            <a href="/edit/<%= user.id %>">Atualizar</a>
+            <form action="/delete/<%= user.id %>?_method=DELETE" method="POST" style="display:inline;">
+              <button type="submit" onclick="return confirm('Tem certeza que deseja excluir este usuário?');">Excluir</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</body>
+</html>
