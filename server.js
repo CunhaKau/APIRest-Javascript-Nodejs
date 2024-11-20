@@ -17,6 +17,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(methodOverride('_method'));  // Permite que o Express entenda PUT e DELETE via campo '_method'
 
+// Servindo arquivos estáticos
+app.use(express.static('public'));
+
 // Rota de index (exibir todos os usuários)
 app.get('/', (req, res) => {
   db.query('SELECT * FROM users', (err, results) => {
@@ -82,7 +85,7 @@ app.put('/edit/:id', (req, res) => {
       }
   
 
-       // Redireciona para a página de índice após a atualização
+       // Redireciona para a página do index após a atualização
        res.redirect('/');
     });
   });
@@ -102,7 +105,7 @@ app.delete('/delete/:id', (req, res) => {
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
   
-      // Redireciona para a página de índice após a exclusão
+      // Redireciona para a página do index após a exclusão
       res.redirect('/');
     });
   });
