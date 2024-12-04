@@ -3,10 +3,10 @@ const mysql = require('mysql2');
 
 // Criando a conexão com o banco de dados MySQL
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'cadastroapi'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DBNAME
 });
 
 // Conectando ao banco de dados
