@@ -3,10 +3,11 @@ const mysql = require('mysql2');
 
 // Criando a conexão com o banco de dados MySQL
 const connection = mysql.createConnection({
-  host: 'localhost',
+  host: 'junction.proxy.rlwy.net',
   user: 'root',
-  password: '',
-  database: 'cadastroapi'
+  password: 'dboxlaBOdqvPZJBUgWjwlGMUjWymfRcg',
+  port: 21513,
+  database: 'railway'
 });
 
 // Conectando ao banco de dados
