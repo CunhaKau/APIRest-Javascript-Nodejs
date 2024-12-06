@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');  // Middleware para usar PUT e DELETE com POST
 const app = express();
-const port = 5000;
+const port = 5001;
 
 // Importando a conexão com o banco de dados
 const db = require('./db');
@@ -21,14 +21,15 @@ app.use(methodOverride('_method'));  // Permite que o Express entenda PUT e DELE
 app.use(express.static('public'));
 
 // Rota de index (exibir todos os usuários)
-app.get('/', (req, res) => {
-  db.query('SELECT * FROM users', (err, results) => {
-    if (err) {
-      console.error('Erro ao consultar os usuários:', err);
-      return res.status(500).json({ error: 'Erro ao consultar os usuários' });
-    }
+app.get('/', async (req, res) => {
+  try {
+    // Usando pool.promise() para realizar a consulta ao banco de dados
+    const [results] = await db.execute('SELECT * FROM users');
     res.render('index', { users: results });
-  });
+  } catch (err) {
+    console.error('Erro ao consultar os usuários:', err);
+    return res.status(500).json({ error: 'Erro ao consultar os usuários' });
+  }
 });
 
 // Rota para exibir formulário de criação de usuário
@@ -37,81 +38,82 @@ app.get('/add', (req, res) => {
 });
 
 // Rota para criar um novo usuário
-app.post('/add', (req, res) => {
+app.post('/add', async (req, res) => {
   const { name, age } = req.body;
   console.log('Dados recebidos:', req.body);
-  db.query('INSERT INTO users (name, age) VALUES (?, ?)', [name, age], (err, result) => {
-    if (err) {
-      console.error('Erro ao adicionar usuário:', err);
-      return res.status(500).json({ error: 'Erro ao adicionar usuário' });
-    }
+  try {
+    // Insere o novo usuário
+    await db.execute('INSERT INTO users (name, age) VALUES (?, ?)', [name, age]);
+    
+    // Redireciona para a página inicial após a inserção
     res.redirect('/');
-  });
+  } catch (err) {
+    console.error('Erro ao adicionar usuário:', err);
+    return res.status(500).json({ error: 'Erro ao adicionar usuário' });
+  }
 });
 
 // Rota para exibir o formulário de edição de um usuário
-app.get('/edit/:id', (req, res) => {
-    const { id } = req.params;
-    db.query('SELECT * FROM users WHERE id = ?', [id], (err, results) => {
-      if (err) {
-        console.error('Erro ao buscar usuário:', err);
-        return res.status(500).json({ error: 'Erro ao buscar usuário' });
-      }
+app.get('/edit/:id', async (req, res) => {
+  const { id } = req.params; // Obtém o ID do parâmetro da URL
+  try {
+      const [results] = await db.execute('SELECT * FROM users WHERE id = ?', [id]);
+      
       if (results.length === 0) {
-        return res.status(404).json({ error: 'Usuário não encontrado' });
+          return res.status(404).json({ error: 'Usuário não encontrado' });
       }
+
+      // Exibe o formulário de edição com os dados do usuário
       res.render('edit', { user: results[0] });
-    });
-  });
+
+  } catch (err) {
+      console.error('Erro ao buscar usuário:', err);
+      return res.status(500).json({ error: 'Erro ao buscar usuário' });
+  }
+});
 
 // Rota para atualizar um usuário (usando PUT)
-app.put('/edit/:id', (req, res) => {
-    const { id } = req.params;
-    const { name, age } = req.body;
-  
-    // Validação dos dados recebidos
-    if (!name || !age) {
-      return res.status(400).json({ error: 'Os campos "name" e "age" são obrigatórios.' });
-    }
-  
-    db.query('UPDATE users SET name = ?, age = ? WHERE id = ?', [name, age, id], (err, result) => {
-      if (err) {
-        console.error('Erro ao atualizar usuário:', err);
-        return res.status(500).json({ error: 'Erro ao atualizar o usuário' });
-      }
-  
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Usuário não encontrado' });
-      }
-  
+app.put('/edit/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, age } = req.body;
 
-       // Redireciona para a página do index após a atualização
-       res.redirect('/');
-    });
-  });
+  // Validação dos dados recebidos
+  if (!name || !age) {
+    return res.status(400).json({ error: 'Os campos "name" e "age" são obrigatórios.' });
+  }
+
+  try {
+    // Usando async/await com db.execute() para atualizar o usuário
+    const [result] = await db.execute('UPDATE users SET name = ?, age = ? WHERE id = ?', [name, age, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Redireciona para a página do index após a atualização
+    res.redirect('/');
+  } catch (err) {
+    console.error('Erro ao atualizar usuário:', err);
+    return res.status(500).json({ error: 'Erro ao atualizar o usuário' });
+  }
+});
 
 // Rota para excluir um usuário (agora usando DELETE)
-app.delete('/delete/:id', (req, res) => {
-    const { id } = req.params;
-    console.log(`Tentando excluir usuário com ID: ${id}`); // Adicionando log para depuração
-  
-    db.query('DELETE FROM users WHERE id = ?', [id], (err, result) => {
-      if (err) {
-        console.error('Erro ao excluir usuário:', err);
-        return res.status(500).json({ error: 'Erro ao excluir usuário' });
-      }
-  
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Usuário não encontrado' });
-      }
-  
-      // Redireciona para a página do index após a exclusão
-      res.redirect('/');
-    });
-  });
-  
+app.delete('/delete/:id', async (req, res) => {
+  const { id } = req.params;
 
-// Iniciar o servidor
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  try {
+    // Usando async/await com db.execute() para excluir o usuário
+    const [result] = await db.execute('DELETE FROM users WHERE id = ?', [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Redireciona para a página do index após a exclusão
+    res.redirect('/');
+  } catch (err) {
+    console.error('Erro ao excluir usuário:', err);
+    return res.status(500).json({ error: 'Erro ao excluir usuário' });
+  }
 });
