@@ -1,18 +1,19 @@
-const mysql = require('mysql2')
+const mysql = require('mysql2');
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST, 
-    user: process.env.DB_USERNAME, 
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DBNAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+// URL de conexão
+const connectionUrl = 'mysql://uw8nxi3fdm71p32w:2rIJBPJtNCgxpIAFFddF@busosxfqfojtq6k8bwx5-mysql.services.clever-cloud.com:3306/busosxfqfojtq6k8bwx5';
 
+// Criar a pool de conexões usando a URL
+const pool = mysql.createPool(connectionUrl);
+
+// Testar a conexão
 pool.getConnection((err, conn) => {
-    if(err) console.log(err)
-    console.log("Connected successfully")
-})
+    if (err) {
+        console.log('Erro ao conectar ao banco de dados: ', err);
+    } else {
+        console.log('Conexão bem-sucedida!');
+        conn.release();  // Libera a conexão de volta para o pool após o uso
+    }
+});
 
 module.exports = pool.promise();
